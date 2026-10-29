@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recipe Card Maker</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#242424;background:#f6f5f2}*{box-sizing:border-box}body{margin:0}.app{max-width:900px;margin:28px auto;padding:0 18px 36px}h1{font-size:26px;margin:0 0 5px}.sub{color:#666;margin:0 0 20px}.panel{background:white;border:1px solid #ddd;border-radius:12px;padding:20px;margin-bottom:16px}.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;margin-bottom:14px}.field input,.field textarea{font:400 14px system-ui;width:100%;border:1px solid #bbb;border-radius:7px;padding:10px;background:white;color:#222}.field textarea{resize:vertical;min-height:100px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}button{cursor:pointer;background:white;border:1px solid #bbb;border-radius:8px;padding:10px 16px;font-weight:600}button.primary{background:#343434;color:white;border-color:#343434}.hint{font-size:13px;color:#666}.preview-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.preview-stack{display:grid;gap:16px}.card-shell{background:#e8e6e1;padding:12px;border-radius:9px;overflow:hidden}.card-viewport{position:relative}.recipe-card{position:absolute;left:0;top:0;width:600px;height:400px;background:#fff;color:#242424;padding:22px 34px 20px;font-family:Georgia,'Times New Roman',serif;transform-origin:top left;overflow:hidden}.recipe-title{font-family:'Brush Script MT','Segoe Script',cursive;font-size:35px;font-style:italic;text-align:center;height:53px;line-height:43px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.continued{font-family:Georgia,serif;font-size:12px;font-style:italic}.time-label{font-size:12px;font-style:italic;height:17px}.times{height:29px;border-top:1px solid #666;border-bottom:1px solid #666;display:grid;grid-template-columns:repeat(3,1fr);align-items:center;font-size:12px;font-style:italic}.columns{display:grid;grid-template-columns:1.8fr 1fr;gap:20px;margin-top:12px}.section-heading{height:21px;font-size:13px;font-style:italic}.ruled-line{height:23px;line-height:22px;border-bottom:1px solid #777;font-size:11px;padding:0 2px;white-space:nowrap;overflow:hidden}.notes-heading{margin-top:9px}.back .columns{margin-top:8px}.status{font-size:13px;color:#666;margin:0 0 12px}@media(max-width:580px){.fields{grid-template-columns:1fr}.panel{padding:14px}}@media print{@page{size:6in 4in;margin:0}html,body{margin:0!important;padding:0!important;background:white!important}.app{margin:0!important;padding:0!important;max-width:none!important}.app>*:not(#preview-panel){display:none!important}#preview-panel{display:block!important;margin:0!important;padding:0!important;border:0!important}.preview-heading,.status{display:none!important}.preview-stack{display:block!important;gap:0!important}.card-shell{width:6in!important;height:4in!important;padding:0!important;border-radius:0!important;background:white!important;overflow:visible!important;break-after:page;page-break-after:always}.card-shell:last-child{break-after:auto;page-break-after:auto}.card-viewport{width:6in!important;height:4in!important}.recipe-card{position:relative!important;width:6in!important;height:4in!important;transform:none!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}}
+</style>
+</head>
+<body>
+<main class="app">
+<h1>Recipe Card Maker</h1><p class="sub">Make printable 4 × 6-inch landscape recipe cards with automatic continuation pages.</p>
+<section class="panel" id="form-panel">
+<label class="field">Recipe name<input id="name" value="Grandma's Chocolate Chip Cookies"></label>
+<div class="fields"><label class="field">Prep time<input id="prep" value="15 min"></label><label class="field">Cook time<input id="cook" value="12 min"></label><label class="field">Total time<input id="total" value="27 min"></label></div>
+<label class="field">Instructions<textarea id="instructions" rows="8">1. Preheat oven to 350°F.
+2. Cream together butter and sugars until light and fluffy.
+3. Beat in the eggs and vanilla extract.
+4. Mix flour, baking soda and salt in a separate bowl.
+5. Gradually combine dry and wet ingredients.
+6. Fold in chocolate chips.
+7. Scoop dough onto baking sheets.
+8. Bake for 10–12 minutes until golden brown.
+9. Let cool for five minutes before serving.</textarea></label>
+<label class="field">Ingredients<textarea id="ingredients" rows="6">1 cup butter
+¾ cup brown sugar
+¾ cup white sugar
+2 eggs
+2 tsp vanilla
+2¼ cups flour
+1 tsp baking soda
+½ tsp salt
+2 cups chocolate chips</textarea></label>
+<label class="field">Notes<textarea id="notes" rows="3">For softer cookies, refrigerate the dough for 30 minutes before baking.</textarea></label>
+</section>
+<div class="actions"><button class="primary" id="print">Print cards</button><button id="clear">Clear form</button></div>
+<section class="panel" id="preview-panel"><div class="preview-heading"><h2>Card preview</h2><span class="hint">6 × 4 in · Landscape</span></div><p class="status" id="status"></p><div id="cards" class="preview-stack"></div></section>
+<p class="hint">Print at actual size (100%) on 4 × 6-inch paper in landscape orientation, with margins and headers/footers disabled. For duplex printing, check your printer's flip-edge setting with a test sheet first.</p>
+</main>
+<script>
+(()=>{
+'use strict';
+const ids=['name','prep','cook','total','instructions','ingredients','notes'];
+const el=id=>document.getElementById(id), value=id=>el(id).value;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const measure=document.createElement('canvas').getContext('2d');measure.font='11px Georgia';
+function wrap(source,width){const result=[];for(const raw of source.replace(/\r/g,'').split('\n')){if(!raw.trim()){result.push('');continue}let line='';for(const word of raw.trim().split(/\s+/)){const candidate=line?line+' '+word:word;if(measure.measureText(candidate).width<=width){line=candidate;continue}if(line){result.push(line);line=''}let fragment='';for(const char of word){if(measure.measureText(fragment+char).width>width&&fragment){result.push(fragment);fragment=''}fragment+=char}line=fragment}result.push(line)}return result}
+function take(arr,count){const output=arr.splice(0,count);while(output.length<count)output.push('');return output}
+function lines(arr){return arr.map(line=>'<div class="ruled-line">'+esc(line)+'</div>').join('')}
+function card(index,inst,ing,notes){const first=index===0;const name=esc(value('name')||'Recipe');return `<div class="card-shell"><div class="card-viewport"><article class="recipe-card ${first?'':'back'}"><div class="recipe-title">${name}${first?'':' <span class="continued">continued</span>'}</div>${first?`<div class="time-label">time</div><div class="times"><span>prep : ${esc(value('prep'))}</span><span>cook : ${esc(value('cook'))}</span><span>total : ${esc(value('total'))}</span></div>`:''}<div class="columns"><div><div class="section-heading">Instructions${first?'':' (continued)'}</div>${lines(inst)}</div><div><div class="section-heading">Ingredients${first?'':' (continued)'}</div>${lines(ing)}<div class="section-heading notes-heading">Notes</div>${lines(notes)}</div></div></article></div></div>`}
+function resize(){document.querySelectorAll('.card-shell').forEach(shell=>{const viewport=shell.querySelector('.card-viewport');const card=viewport.querySelector('.recipe-card');const scale=Math.min(1,(shell.clientWidth-24)/600);viewport.style.width=600*scale+'px';viewport.style.height=400*scale+'px';card.style.transform=`scale(${scale})`})}
+function build(){const inst=wrap(value('instructions'),308),ing=wrap(value('ingredients'),163),notes=wrap(value('notes'),163);let html='',count=0;do{const first=count===0;html+=card(count,take(inst,first?9:12),take(ing,first?5:7),take(notes,first?3:4));count++}while((inst.length||ing.length||notes.length)&&count<100);el('cards').innerHTML=html;el('status').textContent=`${count} card${count===1?'':'s'} · ${count===1?'front only':'front and continuation card'+(count>2?'s':'')}`;resize()}
+ids.forEach(id=>el(id).addEventListener('input',build));el('clear').addEventListener('click',()=>{ids.forEach(id=>el(id).value='');build()});el('print').addEventListener('click',()=>{build();window.print()});window.addEventListener('resize',resize);window.addEventListener('beforeprint',build);build();
+})();
+</script>
+</body>
+</html>
